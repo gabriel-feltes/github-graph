@@ -311,14 +311,27 @@ function App() {
                       );
                     }
                     // Se for um link puro para YouTube, embute o vídeo
-                    if (isYouTubeLink(href)) {
-                      const videoId = new URL(href).searchParams.get("v");
+                  if (isYouTubeLink(href)) {
+                    let videoId = null;
+
+                    // Verifica se o link é do tipo youtube.com
+                    if (href.includes('youtube.com')) {
+                      videoId = new URL(href).searchParams.get('v');
+                    }
+                    // Verifica se o link é do tipo youtu.be
+                    else if (href.includes('youtu.be')) {
+                      const urlParts = href.split('/');
+                      videoId = urlParts[urlParts.length - 1];
+                    }
+
+                    // Caso o videoId tenha sido extraído corretamente, renderiza o iframe
+                    if (videoId) {
                       return (
                         <div
                           style={{
                             width: "100%",
                             position: "relative",
-                            paddingBottom: "56.25%", // proporção 16:9
+                            paddingBottom: "56.25%", // Proporção 16:9
                             height: 0,
                             overflow: "hidden",
                           }}
@@ -339,9 +352,12 @@ function App() {
                           />
                         </div>
                       );
+                    } else {
+                      return <p>Link de vídeo do YouTube inválido ou não encontrado.</p>;
                     }
                   }
-                  // Caso contrário, renderiza o link normalmente
+                }
+                // Caso contrário, renderiza o link normalmente
                   return (
                     <a
                       href={href}
