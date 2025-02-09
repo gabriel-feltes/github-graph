@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { ForceGraph2D } from "react-force-graph";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { solarizedlight } from "react-syntax-highlighter/dist/esm/styles/prism";
+import mermaid from "mermaid";
+import { FaLink } from 'react-icons/fa';  // Importando o ícone de link
 
 const GITHUB_REPO = "Liga-IA/RepoAI";
 const RAW_BASE_URL = `https://raw.githubusercontent.com/${GITHUB_REPO}/main/`;
@@ -23,30 +25,73 @@ const isYouTubeLink = (url) => /youtube\.com|youtu\.be/.test(url);
 function slugify(text) {
   return text
     .toString()
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, "-") // substitui espaços por hífens
-    .replace(/[^\p{L}\p{N}-]+/gu, "") // remove caracteres indesejados, preservando letras e números
-    .replace(/-+/g, "-");
+    .trim() // Remove espaços extras no início e no fim
+    .replace(/\s+/g, '-') // Substitui espaços por hífens
+    .replace(/[^\w\-ãáâàéêíóôúãõç]+/g, '') // Remove caracteres não alfanuméricos, mas mantém acentuação
+    .toLowerCase(); // Converte para minúsculas
 }
 
 // --- Componentes Customizados para ReactMarkdown ---
-
-// Componente customizado para headings que adiciona o id (para âncoras)
+// Componente customizado para headings com estilo adicional
 function Heading({ level, children, ...props }) {
-  // Garante que children seja um array
   const childrenArray = Array.isArray(children) ? children : [children];
   const text = childrenArray
-    .map((child) => (typeof child === "string" ? child : ""))
-    .join("");
-  const id = slugify(text);
-  const Tag = "h" + level;
+    .map((child) => (typeof child === 'string' ? child : ''))
+    .join('');
+  const id = slugify(text); // Gera o ID usando a função slugify
+  const Tag = 'h' + level; // Cria a tag dinamicamente (h1, h2, h3, etc.)
+
   return (
-    <Tag id={id} {...props}>
+    <Tag id={id} {...props} style={{
+      position: 'relative',
+      paddingRight: '20px',
+      marginBottom: '1em', // Adiciona espaçamento abaixo do título
+      paddingTop: level === 1 ? '20px' : '10px', // Mais espaço para títulos maiores
+      borderBottom: '2px solid #ddd', // Linha inferior para separar os títulos
+    }}>
       {children}
+      <a
+        href={`#${id}`}
+        aria-label={`Link para o título ${children}`} // Acessibilidade adicional
+        style={{
+          position: 'absolute',
+          right: '0',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          textDecoration: 'underline',
+          color: '#0366d6',
+          opacity: '1',
+          fontSize: '0.8em',
+          marginLeft: '8px',
+          transition: 'opacity 0.2s',
+        }}
+      >
+        <FaLink />
+      </a>
     </Tag>
   );
 }
+
+// Adicionando mais espaçamento aos parágrafos, listas e blockquotes
+const customStyles = {
+  p: {
+    marginBottom: '1.5em', // Maior espaçamento entre parágrafos
+  },
+  ul: {
+    marginBottom: '1.5em', // Maior espaçamento entre listas
+    paddingLeft: '20px',
+  },
+  ol: {
+    marginBottom: '1.5em', // Maior espaçamento entre listas ordenadas
+    paddingLeft: '20px',
+  },
+  blockquote: {
+    marginBottom: '1.5em', // Maior espaçamento entre blockquotes
+    paddingLeft: '20px',
+    borderLeft: '4px solid #ccc', // Linha de separação
+    backgroundColor: '#f4f4f4', // Fundo leve para blockquotes
+  },
+};
 
 // Componente customizado para blockquotes que renderiza alertas
 function Blockquote({ children, ...props }) {
@@ -124,6 +169,33 @@ function Blockquote({ children, ...props }) {
   }
 
   return <blockquote {...props}>{children}</blockquote>;
+}
+
+// --- Componente para renderizar diagramas Mermaid ---
+mermaid.initialize({ startOnLoad: false, theme: "default" });
+
+function MermaidRenderer({ code }) {
+  const containerRef = useRef(null);
+  const [svg, setSvg] = useState("");
+
+  useEffect(() => {
+    if (!code || !containerRef.current) return;
+
+    const renderMermaid = async () => {
+      try {
+        const uniqueId = "mermaid-" + Math.random().toString(36).substr(2, 9);
+        const { svg } = await mermaid.render(uniqueId, code);
+        setSvg(svg);
+      } catch (error) {
+        console.error("Erro ao renderizar Mermaid:", error);
+        setSvg(`<pre style="color:red;">Erro ao processar diagrama Mermaid</pre>`);
+      }
+    };
+
+    renderMermaid();
+  }, [code]);
+
+  return <div ref={containerRef} dangerouslySetInnerHTML={{ __html: svg }} />;
 }
 
 // --- Função para construir o grafo da árvore do repositório ---
@@ -209,6 +281,7 @@ function App() {
   const [selectedMarkdown, setSelectedMarkdown] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentPath, setCurrentPath] = useState("");
+  const modalContentRef = React.useRef(null);  // Cria uma referência para o diálogo
 
   useEffect(() => {
     fetch(`https://api.github.com/repos/${GITHUB_REPO}/git/trees/main?recursive=1`)
@@ -223,42 +296,57 @@ function App() {
       );
   }, []);
 
-  const handleNodeClick = async (node) => {
-    if (node.id.endsWith(".md")) {
-      const markdownUrl = `${RAW_BASE_URL}${node.id}`;
-      try {
-        const response = await fetch(markdownUrl);
-        let markdown = await response.text();
-        const markdownDir = node.id.substring(0, node.id.lastIndexOf("/") + 1);
-        // Ajusta caminhos relativos de imagens
-        markdown = markdown.replace(
-          /!\[([^\]]*)\]\((?!http)(.*?)\)/g,
-          (match, alt, src) => {
-            const fixedSrc = fixPath(src, markdownDir);
-            return `![${alt}](${encodeURL(RAW_BASE_URL + fixedSrc)})`;
-          }
-        );
-        setSelectedMarkdown(markdown);
-        setCurrentPath(markdownDir);
-        setIsModalOpen(true);
-      } catch (error) {
-        console.error("Erro ao carregar Markdown:", error);
-      }
-    }
-  };
+  // Adicionar estado para o nó ativo
+const [activeNode, setActiveNode] = useState(null);
 
+// Modificar a função de clique no nó
+const handleNodeClick = async (node) => {
+  setActiveNode(node.id);  // Marca o nó clicado como ativo
+  if (node.id.endsWith(".md")) {
+    const markdownUrl = `${RAW_BASE_URL}${node.id}`;
+    try {
+      const response = await fetch(markdownUrl);
+      let markdown = await response.text();
+      const markdownDir = node.id.substring(0, node.id.lastIndexOf("/") + 1);
+      markdown = markdown.replace(
+        /!\[([^\]]*)\]\((?!http)(.*?)\)/g,
+        (match, alt, src) => {
+          const fixedSrc = fixPath(src, markdownDir);
+          return `![${alt}](${encodeURL(RAW_BASE_URL + fixedSrc)})`;
+        }
+      );
+      setSelectedMarkdown(markdown);
+      setCurrentPath(markdownDir);
+      setIsModalOpen(true);
+    } catch (error) {
+      console.error("Erro ao carregar Markdown:", error);
+    }
+  }
+};
+  
   const handleLinkClick = (href, e) => {
     e.preventDefault();
-    const fixedHref = decodeURIComponent(
-      href.startsWith("/") ? href.slice(1) : href
-    );
+    const fixedHref = decodeURIComponent(href.startsWith("/") ? href.slice(1) : href);
     const targetNode = graphData.nodes.find((n) => n.id === fixedHref);
+    
     if (targetNode) {
-      handleNodeClick(targetNode);
+      handleNodeClick(targetNode); // Navega para o nó correspondente no grafo
     } else {
-      console.error("Nó não encontrado para href:", fixedHref);
+      // Se for link de âncora, faz a navegação suave
+      if (href.startsWith('#')) {
+        const targetId = decodeURIComponent(href.slice(1)); // Decodifica o ID
+        const element = modalContentRef.current.querySelector(`#${targetId}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+          console.error(`Elemento com ID "${targetId}" não encontrado!`);
+        }
+      }
+      else {
+        console.error("Nó não encontrado para href:", fixedHref);
+      }
     }
-  };
+  };  
 
   const closeModal = () => {
     setIsModalOpen(false);
@@ -274,14 +362,13 @@ function App() {
     <div style={{ display: "flex", height: "100vh" }}>
       {/* Lado esquerdo: Grafo do repositório */}
       <div style={{ width: "50%" }}>
-        <ForceGraph2D
-          graphData={graphData}
-          nodeLabel="id"
-          nodeColor={(node) => node.color}
-          onNodeClick={handleNodeClick}
-        />
+      <ForceGraph2D
+        graphData={graphData}
+        nodeLabel="id"
+        nodeColor={(node) => node.id === activeNode ? "#ff4444" : node.color}  // Destaca o nó ativo
+        onNodeClick={handleNodeClick}
+      />
       </div>
-
       {/* Modal para exibição do Markdown */}
       {isModalOpen && (
         <div
@@ -328,21 +415,23 @@ function App() {
             >
               Fechar
             </button>
-
+              {/* Aqui o ref é aplicado no conteúdo do modal */}
+                <div ref={modalContentRef}>
             <ReactMarkdown
               children={selectedMarkdown}
               remarkPlugins={[remarkGfm]}
               rehypePlugins={[rehypeRaw]}
               components={{
-                // Headings com id para âncoras
-                h1: Heading,
-                h2: Heading,
-                h3: Heading,
-                h4: Heading,
-                h5: Heading,
-                h6: Heading,
-                // Blockquote customizado para alertas
-                blockquote: Blockquote,
+                h1: (props) => <Heading {...props} />,
+                h2: (props) => <Heading {...props} />,
+                h3: (props) => <Heading {...props} />,
+                h4: (props) => <Heading {...props} />,
+                h5: (props) => <Heading {...props} />,
+                h6: (props) => <Heading {...props} />,
+                blockquote: (props) => <Blockquote {...props} />,
+                p: ({ children }) => <p style={customStyles.p}>{children}</p>,
+                ul: ({ children }) => <ul style={customStyles.ul}>{children}</ul>,
+                ol: ({ children }) => <ol style={customStyles.ol}>{children}</ol>,
                 // Renderização de imagens
                 img: ({ node, ...props }) => {
                   const fixedSrc = fixPath(props.src, currentPath);
@@ -371,7 +460,6 @@ function App() {
                 // - Links relativos para nós do grafo
                 a: ({ node, ...props }) => {
                   const href = props.href;
-
                   // Se for link para arquivo de vídeo
                   if (href.match(/\.(mp4|webm|ogg)$/i)) {
                     const videoUrl = href.startsWith("http")
@@ -387,7 +475,6 @@ function App() {
                       </video>
                     );
                   }
-
                   // Se for link para YouTube
                   if (isYouTubeLink(href)) {
                     let videoId = null;
@@ -428,18 +515,20 @@ function App() {
                       return <p>Link de vídeo do YouTube inválido ou não encontrado.</p>;
                     }
                   }
-
                   // Se for link âncora (inicia com "#"), rola suavemente até o elemento
-                  if (href.startsWith("#")) {
+                  if (href.startsWith('#')) {
                     return (
                       <a
                         href={href}
                         onClick={(e) => {
                           e.preventDefault();
-                          const targetId = href.slice(1);
-                          const element = document.getElementById(targetId);
+                          const targetId = decodeURIComponent(href.slice(1)); // Decodifica o ID
+                          const element = modalContentRef.current.querySelector(`#${targetId}`);
+                      
                           if (element) {
-                            element.scrollIntoView({ behavior: "smooth" });
+                            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                          } else {
+                            console.error(`Elemento com ID "${targetId}" não encontrado!`);
                           }
                         }}
                       >
@@ -447,7 +536,6 @@ function App() {
                       </a>
                     );
                   }
-
                   // Se for link relativo (não começa com "http")
                   if (!href.startsWith("http")) {
                     return (
@@ -456,7 +544,6 @@ function App() {
                       </a>
                     );
                   }
-
                   // Se o link envolver exatamente um filho e esse filho possuir a prop src (ex.: imagem)
                   let child = null;
                   try {
@@ -471,7 +558,6 @@ function App() {
                       </a>
                     );
                   }
-
                   // Caso contrário, link externo padrão
                   return (
                     <a href={href} target="_blank" rel="noopener noreferrer">
@@ -507,40 +593,84 @@ function App() {
                   );
                 },
                 // Bloco de código com botão "Copiar"
-                code: ({ node, inline, className, children, ...props }) => {
+                code: ({ inline, className, children, ...props }) => {
+                  // Quando o código for inline
                   if (inline) {
-                    return <code className={className}>{children}</code>;
+                    return (
+                      <code
+                      style={{
+                        backgroundColor: "#f5cc00 !important", // Cor de fundo com !important
+                        padding: "2px 4px",                    // Padding para dar espaço entre o texto
+                        borderRadius: "4px",                   // Arredondar as bordas
+                        fontFamily: "monospace",                // Fonte monoespaçada
+                        color: "#000",                         // Cor do texto
+                        display: "inline-block",               // Força o código inline
+                      }}
+                      {...props}
+                    >
+                        {children}
+                      </code>
+                    );
                   }
-                  const language = className?.replace("language-", "");
-                  return (
+                  // Caso contrário, se for um bloco de código
+                  const match = /language-(\w+)/.exec(className || "");
+                  // Se for um bloco Mermaid, renderiza o diagrama
+                  if (match && match[1] === "mermaid") {
+                    return <MermaidRenderer code={String(children).replace(/\n$/, "")} />;
+                  }
+                  return match ? (
                     <div style={{ position: "relative" }}>
                       <button
                         onClick={() => copyToClipboard(children)}
                         style={{
                           position: "absolute",
-                          top: "5px",
-                          right: "5px",
-                          padding: "2px 6px",
-                          fontSize: "12px",
-                          backgroundColor: "#333",
-                          color: "#fff",
+                          top: "10px",
+                          right: "10px",
+                          backgroundColor: "#4CAF50", // Cor do botão
+                          color: "white",
+                          padding: "5px 10px",
                           border: "none",
-                          borderRadius: "4px",
+                          borderRadius: "5px",
                           cursor: "pointer",
                         }}
                       >
                         Copiar
                       </button>
-                      <SyntaxHighlighter language={language} style={solarizedlight}>
-                        {children}
+                      <SyntaxHighlighter
+                        language={match[1]}
+                        style={solarizedlight}
+                        showLineNumbers={true}
+                      >
+                        {String(children).replace(/\n$/, "")}
                       </SyntaxHighlighter>
                     </div>
+                  ) : (
+                    <pre style={{
+                      backgroundColor: "transparent", // Sem cor de fundo no <pre>
+                      padding: 0,                      // Remove o padding extra do <pre>
+                      margin: 0,                       // Remove qualquer margem
+                      display: "inline-block",         // Mantém o código inline (não pula para a próxima linha)
+                    }}>
+                      <code
+                        {...props}
+                        style={{
+                          backgroundColor: "#f5cc00",   // Cor de fundo amarela apenas no <code>
+                          padding: "2px 4px",            // Padding pequeno para não afastar o texto da borda
+                          borderRadius: "4px",           // Borda arredondada
+                          fontFamily: "monospace",        // Fonte monoespaçada
+                          color: "#000",                 // Cor do texto
+                        }}
+                      >
+                        {children}
+                      </code>
+                    </pre>
                   );
                 },
               }}
             />
           </div>
         </div>
+      </div>
       )}
     </div>
   );

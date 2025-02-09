@@ -81,3 +81,12 @@
   cursor: pointer;
   font-size: 14px;
 }
+
+h1, h2, h3, h4, h5, h6 {
+  position: relative;
+  padding-right: 20px;
+}
+
+h1:hover a, h2:hover a, h3:hover a, h4:hover a, h5:hover a, h6:hover a {
+  opacity: 1 !important;
+}
