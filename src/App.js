@@ -1,280 +1,17 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { ForceGraph2D } from "react-force-graph";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { solarizedlight } from "react-syntax-highlighter/dist/esm/styles/prism";
-import mermaid from "mermaid";
-import { FaLink } from 'react-icons/fa';  // Importando o ícone de link
+import "./App.css";
+import * as Utils from "./functions";
+import { buildTreeGraph } from "./graphConfig";
 
-const GITHUB_REPO = "Liga-IA/RepoAI";
-const RAW_BASE_URL = `https://raw.githubusercontent.com/${GITHUB_REPO}/main/`;
-
-// --- Helpers ---
-const encodeURL = (url) => url.replace(/ /g, "%20");
-
-const fixPath = (path, currentPath = "") => {
-  return path.startsWith("/") ? path.slice(1) : currentPath + path;
-};
-
-const isYouTubeLink = (url) => /youtube\.com|youtu\.be/.test(url);
-
-// Função para gerar slug (id) a partir do texto da heading.
-// Removemos escapes desnecessários.
-function slugify(text) {
-  return text
-    .toString()
-    .trim() // Remove espaços extras no início e no fim
-    .replace(/\s+/g, '-') // Substitui espaços por hífens
-    .replace(/[^\w\-ãáâàéêíóôúãõç]+/g, '') // Remove caracteres não alfanuméricos, mas mantém acentuação
-    .toLowerCase(); // Converte para minúsculas
-}
-
-// --- Componentes Customizados para ReactMarkdown ---
-// Componente customizado para headings com estilo adicional
-function Heading({ level, children, ...props }) {
-  const childrenArray = Array.isArray(children) ? children : [children];
-  const text = childrenArray
-    .map((child) => (typeof child === 'string' ? child : ''))
-    .join('');
-  const id = slugify(text); // Gera o ID usando a função slugify
-  const Tag = 'h' + level; // Cria a tag dinamicamente (h1, h2, h3, etc.)
-
-  return (
-    <Tag id={id} {...props} style={{
-      position: 'relative',
-      paddingRight: '20px',
-      marginBottom: '1em', // Adiciona espaçamento abaixo do título
-      paddingTop: level === 1 ? '20px' : '10px', // Mais espaço para títulos maiores
-      borderBottom: '2px solid #ddd', // Linha inferior para separar os títulos
-    }}>
-      {children}
-      <a
-        href={`#${id}`}
-        aria-label={`Link para o título ${children}`} // Acessibilidade adicional
-        style={{
-          position: 'absolute',
-          right: '0',
-          top: '50%',
-          transform: 'translateY(-50%)',
-          textDecoration: 'underline',
-          color: '#0366d6',
-          opacity: '1',
-          fontSize: '0.8em',
-          marginLeft: '8px',
-          transition: 'opacity 0.2s',
-        }}
-      >
-        <FaLink />
-      </a>
-    </Tag>
-  );
-}
-
-// Adicionando mais espaçamento aos parágrafos, listas e blockquotes
-const customStyles = {
-  p: {
-    marginBottom: '1.5em', // Maior espaçamento entre parágrafos
-  },
-  ul: {
-    marginBottom: '1.5em', // Maior espaçamento entre listas
-    paddingLeft: '20px',
-  },
-  ol: {
-    marginBottom: '1.5em', // Maior espaçamento entre listas ordenadas
-    paddingLeft: '20px',
-  },
-  blockquote: {
-    marginBottom: '1.5em', // Maior espaçamento entre blockquotes
-    paddingLeft: '20px',
-    borderLeft: '4px solid #ccc', // Linha de separação
-    backgroundColor: '#f4f4f4', // Fundo leve para blockquotes
-  },
-};
-
-// Componente customizado para blockquotes que renderiza alertas
-function Blockquote({ children, ...props }) {
-  let alertType = null;
-  let newChildren = children;
-
-  if (Array.isArray(children) && children.length > 0) {
-    const firstChild = children[0];
-    if (
-      firstChild &&
-      firstChild.props &&
-      firstChild.props.children &&
-      typeof firstChild.props.children[0] === "string"
-    ) {
-      const firstChildText = firstChild.props.children[0];
-      const match = firstChildText.match(/^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*/);
-      if (match) {
-        alertType = match[1];
-        const newText = firstChildText.replace(/^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*/, "");
-        const newFirstChild = React.cloneElement(firstChild, {
-          children: [newText, ...(firstChild.props.children.slice(1) || [])],
-        });
-        newChildren = [newFirstChild, ...children.slice(1)];
-      }
-    }
-  }
-
-  if (alertType) {
-    let style = {};
-    switch (alertType) {
-      case "NOTE":
-        style = {
-          borderLeft: "4px solid #1e90ff",
-          background: "#e7f3fe",
-          padding: "0.5em 1em",
-          margin: "1em 0",
-        };
-        break;
-      case "TIP":
-        style = {
-          borderLeft: "4px solid #28a745",
-          background: "#eafaf1",
-          padding: "0.5em 1em",
-          margin: "1em 0",
-        };
-        break;
-      case "IMPORTANT":
-        style = {
-          borderLeft: "4px solid #fd7e14",
-          background: "#fff4e5",
-          padding: "0.5em 1em",
-          margin: "1em 0",
-        };
-        break;
-      case "WARNING":
-        style = {
-          borderLeft: "4px solid #dc3545",
-          background: "#f8d7da",
-          padding: "0.5em 1em",
-          margin: "1em 0",
-        };
-        break;
-      case "CAUTION":
-        style = {
-          borderLeft: "4px solid #ffc107",
-          background: "#fff3cd",
-          padding: "0.5em 1em",
-          margin: "1em 0",
-        };
-        break;
-      default:
-        style = { borderLeft: "4px solid #ccc", padding: "0.5em 1em", margin: "1em 0" };
-    }
-    return <div style={style}>{newChildren}</div>;
-  }
-
-  return <blockquote {...props}>{children}</blockquote>;
-}
-
-// --- Componente para renderizar diagramas Mermaid ---
-mermaid.initialize({ startOnLoad: false, theme: "default" });
-
-function MermaidRenderer({ code }) {
-  const containerRef = useRef(null);
-  const [svg, setSvg] = useState("");
-
-  useEffect(() => {
-    if (!code || !containerRef.current) return;
-
-    const renderMermaid = async () => {
-      try {
-        const uniqueId = "mermaid-" + Math.random().toString(36).substr(2, 9);
-        const { svg } = await mermaid.render(uniqueId, code);
-        setSvg(svg);
-      } catch (error) {
-        console.error("Erro ao renderizar Mermaid:", error);
-        setSvg(`<pre style="color:red;">Erro ao processar diagrama Mermaid</pre>`);
-      }
-    };
-
-    renderMermaid();
-  }, [code]);
-
-  return <div ref={containerRef} dangerouslySetInnerHTML={{ __html: svg }} />;
-}
-
-// --- Função para construir o grafo da árvore do repositório ---
-const buildTreeGraph = (treeArray) => {
-  let nodes = [];
-  let links = [];
-  const nodeMap = {};
-
-  const addNode = (id, name, type) => {
-    if (!nodeMap[id]) {
-      const node = { id, name, type, special: false };
-      nodes.push(node);
-      nodeMap[id] = node;
-    }
-  };
-
-  // Nó raiz
-  addNode("root", "Repositório", "folder");
-
-  const markdownFiles = treeArray.filter((item) => item.path.endsWith(".md"));
-
-  for (const file of markdownFiles) {
-    const parts = file.path.split("/");
-    let parent = "root";
-    let currentPath = "";
-    for (let i = 0; i < parts.length; i++) {
-      if (i < parts.length - 1) {
-        currentPath = currentPath ? `${currentPath}/${parts[i]}` : parts[i];
-        addNode(currentPath, parts[i], "folder");
-        links.push({ source: parent, target: currentPath });
-        parent = currentPath;
-      } else {
-        const fileId = file.path;
-        addNode(fileId, parts[i], "file");
-        links.push({ source: parent, target: fileId });
-      }
-    }
-  }
-
-  const specialKeys = new Set(["repoAI-template", "tutoriais", "README.md"]);
-  const docId = "documentacao";
-  const docNode = { id: docId, name: "Documentação", type: "folder", special: true };
-  nodes.push(docNode);
-  nodeMap[docId] = docNode;
-  links.push({ source: "root", target: docId });
-
-  for (let i = links.length - 1; i >= 0; i--) {
-    const link = links[i];
-    const childIdParts = link.target.split("/");
-    const childName = childIdParts[childIdParts.length - 1];
-    if (link.source === "root" && specialKeys.has(childName)) {
-      links.splice(i, 1);
-      links.push({ source: docId, target: link.target });
-      if (nodeMap[link.target]) {
-        nodeMap[link.target].special = true;
-      }
-    }
-  }
-
-  let changed = true;
-  while (changed) {
-    changed = false;
-    for (const link of links) {
-      if (nodeMap[link.source] && nodeMap[link.source].special && !nodeMap[link.target].special) {
-        nodeMap[link.target].special = true;
-        changed = true;
-      }
-    }
-  }
-
-  const specialColor = "#ff9900";
-  const defaultColor = "#00aaff";
-  nodes = nodes.map((node) => {
-    node.color = node.special ? specialColor : defaultColor;
-    return node;
-  });
-
-  return { nodes, links };
-};
+const GITHUB_REPO = "Liga-IA/RepoIA";  // Repositório do GitHub
+const BRANCH = "main";  // Branch do repositório
+const RAW_BASE_URL = `https://raw.githubusercontent.com/${GITHUB_REPO}/${BRANCH}/`;
 
 function App() {
   const [graphData, setGraphData] = useState({ nodes: [], links: [] });
@@ -284,7 +21,7 @@ function App() {
   const modalContentRef = React.useRef(null);  // Cria uma referência para o diálogo
 
   useEffect(() => {
-    fetch(`https://api.github.com/repos/${GITHUB_REPO}/git/trees/main?recursive=1`)
+    fetch(`https://api.github.com/repos/${GITHUB_REPO}/git/trees/${BRANCH}?recursive=1`)
       .then((res) => res.json())
       .then((data) => {
         if (!data.tree) return;
@@ -311,8 +48,8 @@ const handleNodeClick = async (node) => {
       markdown = markdown.replace(
         /!\[([^\]]*)\]\((?!http)(.*?)\)/g,
         (match, alt, src) => {
-          const fixedSrc = fixPath(src, markdownDir);
-          return `![${alt}](${encodeURL(RAW_BASE_URL + fixedSrc)})`;
+          const fixedSrc = Utils.fixPath(src, markdownDir);
+          return `![${alt}](${Utils.encodeURL(RAW_BASE_URL + fixedSrc)})`;
         }
       );
       setSelectedMarkdown(markdown);
@@ -422,20 +159,20 @@ const handleNodeClick = async (node) => {
               remarkPlugins={[remarkGfm]}
               rehypePlugins={[rehypeRaw]}
               components={{
-                h1: (props) => <Heading {...props} />,
-                h2: (props) => <Heading {...props} />,
-                h3: (props) => <Heading {...props} />,
-                h4: (props) => <Heading {...props} />,
-                h5: (props) => <Heading {...props} />,
-                h6: (props) => <Heading {...props} />,
-                blockquote: (props) => <Blockquote {...props} />,
-                p: ({ children }) => <p style={customStyles.p}>{children}</p>,
-                ul: ({ children }) => <ul style={customStyles.ul}>{children}</ul>,
-                ol: ({ children }) => <ol style={customStyles.ol}>{children}</ol>,
+                h1: (props) => <Utils.Heading {...props} />,
+                h2: (props) => <Utils.Heading {...props} />,
+                h3: (props) => <Utils.Heading {...props} />,
+                h4: (props) => <Utils.Heading {...props} />,
+                h5: (props) => <Utils.Heading {...props} />,
+                h6: (props) => <Utils.Heading {...props} />,
+                blockquote: (props) => <Utils.Blockquote {...props} />,
+                p: ({ children }) => <p style={Utils.customStyles.p}>{children}</p>,
+                ul: ({ children }) => <ul style={Utils.customStyles.ul}>{children}</ul>,
+                ol: ({ children }) => <ol style={Utils.customStyles.ol}>{children}</ol>,
                 // Renderização de imagens
                 img: ({ node, ...props }) => {
-                  const fixedSrc = fixPath(props.src, currentPath);
-                  const imageUrl = encodeURL(
+                  const fixedSrc = Utils.fixPath(props.src, currentPath);
+                  const imageUrl = Utils.encodeURL(
                     props.src.startsWith("http")
                       ? props.src
                       : `${RAW_BASE_URL}${fixedSrc}`
@@ -476,7 +213,7 @@ const handleNodeClick = async (node) => {
                     );
                   }
                   // Se for link para YouTube
-                  if (isYouTubeLink(href)) {
+                  if (Utils.isYouTubeLink(href)) {
                     let videoId = null;
                     if (href.includes("youtube.com")) {
                       videoId = new URL(href).searchParams.get("v");
@@ -616,7 +353,7 @@ const handleNodeClick = async (node) => {
                   const match = /language-(\w+)/.exec(className || "");
                   // Se for um bloco Mermaid, renderiza o diagrama
                   if (match && match[1] === "mermaid") {
-                    return <MermaidRenderer code={String(children).replace(/\n$/, "")} />;
+                    return <Utils.MermaidRenderer code={String(children).replace(/\n$/, "")} />;
                   }
                   return match ? (
                     <div style={{ position: "relative" }}>
