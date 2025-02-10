@@ -11,12 +11,17 @@
     <title>RepoAI Viewer</title>
     <style>
       /* Estilos básicos para estruturar e adaptar o layout */
+      * {
+        box-sizing: border-box; /* Isso ajuda a evitar o overflow inesperado */
+      }
+
       body {
         margin: 0;
         font-family: Arial, sans-serif;
         display: flex;
         flex-direction: column;
         min-height: 100vh;
+        overflow-x: hidden; /* Evitar rolagem horizontal */
       }
 
       header,
@@ -25,17 +30,21 @@
         color: #fff;
         padding: 20px;
         text-align: center;
+        width: 100%;
       }
 
       main {
         flex: 1;
         padding: 20px;
+        overflow: hidden; /* Prevenir rolagem excessiva */
       }
 
       /* Centraliza o conteúdo e limita a largura */
       .container {
-        max-width: 1200px;
+        max-width: 100%;
+        width: 100%;
         margin: 0 auto;
+        padding: 0 20px;
       }
 
       /* Ajustes para dispositivos móveis */
@@ -45,8 +54,24 @@
           padding: 15px;
           font-size: 14px;
         }
+
         main {
           padding: 15px;
+        }
+
+        .container {
+          padding: 0 15px;
+        }
+      }
+
+      /* Ajustes para garantir que o conteúdo se ajuste bem em telas pequenas */
+      @media (max-width: 480px) {
+        header h1 {
+          font-size: 1.5rem; /* Menor título em telas pequenas */
+        }
+
+        footer p {
+          font-size: 12px; /* Fonte menor no rodapé */
         }
       }
     </style>
@@ -70,15 +95,17 @@
       <div id="root" class="container"></div>
     </main>
 
-<!-- Rodapé informativo -->
-<footer>
-  <div class="container">
-    <p>&copy; 2025 RepoAI. Todos os direitos reservados.</p>
-    <p>
-      Licenciado sob a 
-      <a href="https://github.com/Liga-IA/RepoAI/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">
-        Licença do GitHub
-      </a>.
-    </p>
-  </div>
-</footer>
+    <!-- Rodapé informativo -->
+    <footer>
+      <div class="container">
+        <p>&copy; 2025 RepoAI. Todos os direitos reservados.</p>
+        <p>
+          Licenciado sob a 
+          <a href="https://github.com/Liga-IA/RepoAI/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">
+            Licença do GitHub
+          </a>.
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>
