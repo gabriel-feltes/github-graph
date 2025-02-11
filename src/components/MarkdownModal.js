@@ -1,4 +1,3 @@
-// src/components/MarkdownModal.js
 import React from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -6,59 +5,26 @@ import rehypeRaw from "rehype-raw";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { solarizedlight } from "react-syntax-highlighter/dist/esm/styles/prism";
 import * as Utils from "../functions";
+import { Heading } from "./heading";
+import { MermaidRenderer } from "./mermaid";
+import "../App.css";
 
-function MarkdownModal({
+const MarkdownModal = ({
   selectedMarkdown,
   currentPath,
   rawBaseUrl,
   closeModal,
   modalContentRef,
   handleLinkClick,
-  copyToClipboard,
-}) {
+  handleCopyToClipboard
+}) => {
+  // Componente para headings (h1-h6)
+  const HeadingComponent = (props) => <Heading {...props} />;
+
   return (
-    <div
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: "rgba(0, 0, 0, 0.5)",
-        zIndex: 1000,
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-      onClick={closeModal}
-    >
-      <div
-        style={{
-          backgroundColor: "white",
-          padding: "20px",
-          borderRadius: "8px",
-          maxWidth: "800px",
-          width: "80%",
-          maxHeight: "90vh",
-          overflowY: "auto",
-          position: "relative",
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button
-          onClick={closeModal}
-          style={{
-            position: "absolute",
-            top: "10px",
-            right: "10px",
-            padding: "5px 10px",
-            border: "none",
-            backgroundColor: "#ff4444",
-            color: "#fff",
-            borderRadius: "5px",
-            cursor: "pointer",
-          }}
-        >
+    <div className="modal-overlay" onClick={closeModal}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <button onClick={closeModal} className="close-btn">
           Fechar
         </button>
         <div ref={modalContentRef}>
@@ -67,16 +33,18 @@ function MarkdownModal({
             remarkPlugins={[remarkGfm]}
             rehypePlugins={[rehypeRaw]}
             components={{
-              h1: (props) => <Utils.Heading {...props} />,
-              h2: (props) => <Utils.Heading {...props} />,
-              h3: (props) => <Utils.Heading {...props} />,
-              h4: (props) => <Utils.Heading {...props} />,
-              h5: (props) => <Utils.Heading {...props} />,
-              h6: (props) => <Utils.Heading {...props} />,
-              blockquote: (props) => <Utils.Blockquote {...props} />,
-              p: ({ children }) => <p style={Utils.customStyles.p}>{children}</p>,
-              ul: ({ children }) => <ul style={Utils.customStyles.ul}>{children}</ul>,
-              ol: ({ children }) => <ol style={Utils.customStyles.ol}>{children}</ol>,
+              // Utiliza o mesmo componente para todos os headings
+              h1: (props) => <HeadingComponent level={1} {...props} />,
+              h2: (props) => <HeadingComponent level={2} {...props} />,
+              h3: (props) => <HeadingComponent level={3} {...props} />,
+              h4: (props) => <HeadingComponent level={4} {...props} />,
+              h5: (props) => <HeadingComponent level={5} {...props} />,
+              h6: (props) => <HeadingComponent level={6} {...props} />,
+              // Elementos de texto e listas
+              p: ({ children }) => <p>{children}</p>,
+              ul: ({ children }) => <ul>{children}</ul>,
+              ol: ({ children }) => <ol>{children}</ol>,
+              // Renderização de imagens com ajuste de URL
               img: ({ node, ...props }) => {
                 const fixedSrc = Utils.fixPath(props.src, currentPath);
                 const imageUrl = Utils.encodeURL(
@@ -89,30 +57,27 @@ function MarkdownModal({
                     {...props}
                     src={imageUrl}
                     alt={props.alt || "image"}
-                    style={{
-                      width: "100%",
-                      maxHeight: "400px",
-                      objectFit: "contain",
-                    }}
+                    className="img-responsive"
                   />
                 );
               },
+              // Renderização de links, vídeos e embeds do YouTube
               a: ({ node, ...props }) => {
-                const href = props.href;
-                if (href.match(/\.(mp4|webm|ogg)$/i)) {
+                const { href, children } = props;
+
+                // Se for um link para um arquivo de vídeo
+                if (/\.(mp4|webm|ogg)$/i.test(href)) {
                   const videoUrl = href.startsWith("http")
                     ? href
                     : `${rawBaseUrl}${currentPath}${encodeURIComponent(href)}`;
                   return (
-                    <video
-                      src={videoUrl}
-                      controls
-                      style={{ width: "100%", maxHeight: "400px" }}
-                    >
+                    <video src={videoUrl} controls className="video-responsive">
                       Seu navegador não suporta vídeos.
                     </video>
                   );
                 }
+
+                // Se for um link para um vídeo do YouTube
                 if (Utils.isYouTubeLink(href)) {
                   let videoId = null;
                   if (href.includes("youtube.com")) {
@@ -148,68 +113,25 @@ function MarkdownModal({
                         />
                       </div>
                     );
-                  } else {
-                    return (
-                      <p>Link de vídeo do YouTube inválido ou não encontrado.</p>
-                    );
                   }
-                }
-                if (href.startsWith("#")) {
                   return (
-                    <a
-                      href={href}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        const targetId = decodeURIComponent(href.slice(1));
-                        const element = modalContentRef.current.querySelector(
-                          `#${targetId}`
-                        );
-                        if (element) {
-                          element.scrollIntoView({
-                            behavior: "smooth",
-                            block: "start",
-                          });
-                        } else {
-                          console.error(
-                            `Elemento com ID "${targetId}" não encontrado!`
-                          );
-                        }
-                      }}
-                    >
-                      {props.children}
-                    </a>
+                    <div>
+                      Link de vídeo do YouTube inválido ou não encontrado.
+                    </div>
                   );
                 }
-                if (!href.startsWith("http")) {
-                  return (
-                    <a href={href} onClick={(e) => handleLinkClick(href, e)}>
-                      {props.children}
-                    </a>
-                  );
-                }
-                let child = null;
-                try {
-                  child = React.Children.only(props.children);
-                } catch (e) {}
-                if (child && child.props && child.props.src) {
-                  return (
-                    <a
-                      href={href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {props.children}
-                    </a>
-                  );
-                }
+
+                // Caso seja um link padrão
                 return (
-                  <a href={href} target="_blank" rel="noopener noreferrer">
-                    {props.children}
+                  <a href={href} onClick={(e) => handleLinkClick(href, e)}>
+                    {children}
                   </a>
                 );
               },
               video: ({ node, children, ...props }) => {
                 let src = props.src;
+              
+                // Verificar se o src está dentro de children, como no caso de imagens
                 if (!src && children) {
                   React.Children.forEach(children, (child) => {
                     if (child && child.props && child.props.src) {
@@ -217,6 +139,7 @@ function MarkdownModal({
                     }
                   });
                 }
+              
                 if (!src) {
                   return (
                     <p style={{ color: "red" }}>
@@ -224,9 +147,12 @@ function MarkdownModal({
                     </p>
                   );
                 }
+              
+                // Resolver o caminho para vídeos locais
                 const videoUrl = src.startsWith("http")
                   ? src
                   : `${rawBaseUrl}${currentPath}${encodeURIComponent(src)}`;
+              
                 return (
                   <video
                     {...props}
@@ -237,80 +163,47 @@ function MarkdownModal({
                     Seu navegador não suporta vídeos.
                   </video>
                 );
-              },
+              },              
+              // Renderização de blocos de código e código inline
               code: ({ inline, className, children, ...props }) => {
                 if (inline) {
-                  return (
-                    <code
-                      style={{
-                        backgroundColor: "#f5cc00",
-                        padding: "2px 4px",
-                        borderRadius: "4px",
-                        fontFamily: "monospace",
-                        color: "#000",
-                        display: "inline-block",
-                      }}
-                      {...props}
-                    >
-                      {children}
-                    </code>
-                  );
+                  return <code {...props}>{children}</code>;
                 }
+
+                const codeContent = String(children).replace(/\n$/, "");
                 const match = /language-(\w+)/.exec(className || "");
+
+                // Renderiza o diagrama Mermaid se a linguagem for "mermaid"
                 if (match && match[1] === "mermaid") {
+                  return <MermaidRenderer code={codeContent} />;
+                }
+
+                // Renderização com syntax highlighter para linguagens reconhecidas
+                if (match) {
                   return (
-                    <Utils.MermaidRenderer
-                      code={String(children).replace(/\n$/, "")}
-                    />
+                    <div className="code-block">
+                      <button
+                        onClick={() => handleCopyToClipboard && handleCopyToClipboard(children)} // Usando o nome correto da função
+                        className="copy-btn"
+                      >
+                        Copiar
+                      </button>
+
+                      <SyntaxHighlighter
+                        language={match[1]}
+                        style={solarizedlight}
+                        showLineNumbers
+                      >
+                        {codeContent}
+                      </SyntaxHighlighter>
+                    </div>
                   );
                 }
-                return match ? (
-                  <div style={{ position: "relative" }}>
-                    <button
-                      onClick={() => copyToClipboard(children)}
-                      style={{
-                        position: "absolute",
-                        top: "10px",
-                        right: "10px",
-                        backgroundColor: "#4CAF50",
-                        color: "white",
-                        padding: "5px 10px",
-                        border: "none",
-                        borderRadius: "5px",
-                        cursor: "pointer",
-                      }}
-                    >
-                      Copiar
-                    </button>
-                    <SyntaxHighlighter
-                      language={match[1]}
-                      style={solarizedlight}
-                      showLineNumbers
-                    >
-                      {String(children).replace(/\n$/, "")}
-                    </SyntaxHighlighter>
-                  </div>
-                ) : (
-                  <pre
-                    style={{
-                      backgroundColor: "transparent",
-                      padding: 0,
-                      margin: 0,
-                      display: "inline-block",
-                    }}
-                  >
-                    <code
-                      {...props}
-                      style={{
-                        backgroundColor: "#f5cc00",
-                        padding: "2px 4px",
-                        borderRadius: "4px",
-                        fontFamily: "monospace",
-                        color: "#000",
-                      }}
-                    >
-                      {children}
-                    </code>
+
+                // Fallback para blocos de código sem linguagem especificada
+                return (
+                  <pre>
+                    <code {...props}>{children}</code>
                   </pre>
                 );
               },
@@ -320,6 +213,6 @@ function MarkdownModal({
       </div>
     </div>
   );
-}
+};
 
 export default MarkdownModal;

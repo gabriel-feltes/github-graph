@@ -1,9 +1,9 @@
-// src/App.js
 import React, { useState, useRef } from "react";
-import GraphViewer from "./components/GraphViewer";
+import GraphViewer from "./components/graphViewer";
 import MarkdownModal from "./components/MarkdownModal";
 import useRepoData from "./hooks/useRepoData";
-import * as Utils from "./functions"; // Caso precise usar funções utilitárias
+import * as Utils from "./functions";
+import processAlerts from "./components/processAlerts";
 import "./App.css";
 
 const GITHUB_REPO = "Liga-IA/RepoIA";
@@ -38,6 +38,7 @@ function App() {
             return `![${alt}](${Utils.encodeURL(RAW_BASE_URL + fixedSrc)})`;
           }
         );
+        markdown = processAlerts(markdown);
         setSelectedMarkdown(markdown);
         setCurrentPath(markdownDir);
         setIsModalOpen(true);
@@ -81,9 +82,7 @@ function App() {
 
   // Função para copiar texto para a área de transferência
   const copyToClipboard = (text) => {
-    navigator.clipboard.writeText(text).then(() => {
-      alert("Código copiado!");
-    });
+    navigator.clipboard.writeText(text);
   };
 
   return (
@@ -105,7 +104,7 @@ function App() {
           closeModal={closeModal}
           modalContentRef={modalContentRef}
           handleLinkClick={handleLinkClick}
-          copyToClipboard={copyToClipboard}
+          handleCopyToClipboard={copyToClipboard}
         />
       )}
     </div>

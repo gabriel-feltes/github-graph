@@ -1,8 +1,7 @@
-// src/components/GraphViewer.js
 import React from "react";
 import { ForceGraph2D } from "react-force-graph";
 
-function GraphViewer({ graphData, activeNode, onNodeClick }) {
+function graphViewer({ graphData, activeNode, onNodeClick }) {
   return (
     <ForceGraph2D
       graphData={graphData}
@@ -15,4 +14,4 @@ function GraphViewer({ graphData, activeNode, onNodeClick }) {
   );
 }
 
-export default GraphViewer;
+export default graphViewer;

@@ -22,26 +22,36 @@
         flex-direction: column;
         min-height: 100vh;
         overflow-x: hidden; /* Evitar rolagem horizontal */
+        background-color: #f4f4f4; /* Fundo mais claro para contraste */
       }
 
       header,
       footer {
-        background-color: #282c34;
+        background: linear-gradient(135deg, #282c34, #1a1d23); /* Gradiente para mais criatividade */
         color: #fff;
         padding: 20px;
         text-align: center;
         width: 100%;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Sombra sutil */
+      }
+
+      header h1 {
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); /* Sombra no texto para destaque */
       }
 
       main {
         flex: 1;
         padding: 20px;
         overflow: hidden; /* Prevenir rolagem excessiva */
+        background-color: #fff; /* Fundo branco para o conteúdo principal */
+        border-radius: 8px; /* Bordas arredondadas */
+        margin: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Sombra sutil */
       }
 
       /* Centraliza o conteúdo e limita a largura */
       .container {
-        max-width: 100%;
+        max-width: 1200px;
         width: 100%;
         margin: 0 auto;
         padding: 0 20px;
@@ -57,6 +67,7 @@
 
         main {
           padding: 15px;
+          margin: 10px;
         }
 
         .container {
@@ -74,6 +85,17 @@
           font-size: 12px; /* Fonte menor no rodapé */
         }
       }
+
+      /* Links com contraste e hover effect */
+      .exclusive-link {
+      color: #6cd9f7;
+      text-decoration: none;
+      transition: color 0.3s ease;
+      }
+
+      .exclusive-link:hover {
+        color: #33ff00;
+      }
     </style>
   </head>
   <body>
@@ -83,7 +105,7 @@
         <h1>RepoAI Viewer</h1>
         <p>
           Explore os conteúdos de Inteligência Artificial disponíveis no 
-          <a href="https://github.com/Liga-IA/RepoAI" target="_blank" rel="noopener noreferrer">
+          <a href="https://github.com/Liga-IA/RepoAI" class="exclusive-link" target="_blank" rel="noopener noreferrer">
             RepoAI
           </a>.
         </p>        
@@ -101,7 +123,7 @@
         <p>&copy; 2025 RepoAI. Todos os direitos reservados.</p>
         <p>
           Licenciado sob a 
-          <a href="https://github.com/Liga-IA/RepoAI/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">
+          <a href="https://github.com/Liga-IA/RepoAI/blob/main/LICENSE" class="exclusive-link" target="_blank" rel="noopener noreferrer">
             Licença do GitHub
           </a>.
         </p>

@@ -1,3 +1,338 @@
+/* ================================
+   Base & Tipografia
+================================ */
+
+/* Reset básico (ajuste conforme sua necessidade) */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+a {
+  color: #000000;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+a:hover {
+  color: #ff0000;
+}
+
+body {
+  font-family: sans-serif;
+  line-height: 1.6;
+}
+
+/* Parágrafos, Listas e Blockquotes */
+p,
+ul,
+ol,
+blockquote {
+  margin-bottom: 1.5em;
+}
+
+ul,
+ol {
+  padding-left: 20px;
+}
+
+blockquote {
+  padding-left: 20px;
+  border-left: 4px solid #ccc;
+  background-color: #f4f4f4;
+}
+
+/* ================================
+   Headings - Diferenciação Visual
+================================ */
+
+h1, h2, h3, h4, h5, h6 {
+  position: relative;
+  padding-right: 20px;
+  margin-bottom: 1em;
+  border-bottom: 2px solid #ddd;
+  font-weight: bold;
+  line-height: 1.4;
+}
+
+/* Headings principais */
+h1 {
+  padding-top: 20px;
+  font-size: 2em; /* Reduzi o tamanho do h1 */
+  color: #fbff00;
+  border-bottom: 4px solid #1a73e8;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+h2 {
+  padding-top: 10px;
+  font-size: 1.75em; /* Reduzi o tamanho do h2 */
+  color: #00509e;
+  border-bottom: 3px solid #00509e;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+h3 {
+  padding-top: 10px;
+  font-size: 1.5em; /* Reduzi o tamanho do h3 */
+  color: #3c763d;
+  border-bottom: 2px solid #3c763d;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+h4 {
+  padding-top: 10px;
+  font-size: 1.25em; /* Reduzi o tamanho do h4 */
+  color: #d9534f;
+  border-bottom: 1px solid #d9534f;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+h5 {
+  padding-top: 10px;
+  font-size: 1.1em; /* Reduzi o tamanho do h5 */
+  color: #f0ad4e;
+  border-bottom: 1px solid #f0ad4e;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+h6 {
+  padding-top: 10px;
+  font-size: 1em; /* Reduzi o tamanho do h6 */
+  color: #5bc0de;
+  border-bottom: 1px solid #5bc0de;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Link para os títulos */
+h1 a, h2 a, h3 a, h4 a, h5 a, h6 a {
+  position: absolute;
+  right: 0;
+  top: 75%;
+  transform: translateY(-50%);
+  text-decoration: underline;
+  color: #000000;
+  font-size: 0.5em;
+  margin-left: 8px;
+  transition: opacity 0.2s;
+  opacity: 1;
+}
+
+h1 a:hover, h2 a:hover, h3 a:hover, h4 a:hover, h5 a:hover, h6 a:hover {
+  opacity: 0.8;
+  color:#ff0000;
+}
+
+/* Estilos para Headings */
+.heading-level-1 {
+  font-size: 2em; /* Reduzi o tamanho do h1 */
+  color: #080055;
+  border-bottom: 4px solid #080055;
+  padding-top: 20px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.heading-level-2 {
+  font-size: 1.75em; /* Reduzi o tamanho do h2 */
+  color: #00b18a;
+  border-bottom: 3px solid #00b18a;
+  padding-top: 10px;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.heading-level-3 {
+  font-size: 1.5em; /* Reduzi o tamanho do h3 */
+  color: #2fa131;
+  border-bottom: 2px solid #2fa131;
+  padding-top: 10px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.heading-level-4 {
+  font-size: 1.25em; /* Reduzi o tamanho do h4 */
+  color: #ac1b16;
+  border-bottom: 1px solid #ac1b16;
+  padding-top: 10px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.heading-level-5 {
+  font-size: 1.1em; /* Reduzi o tamanho do h5 */
+  color: #f0ad4e;
+  border-bottom: 1px solid #f0ad4e;
+  padding-top: 10px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.heading-level-6 {
+  font-size: 1em; /* Reduzi o tamanho do h6 */
+  color: #5bc0de;
+  border-bottom: 1px solid #5bc0de;
+  padding-top: 10px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* ================================
+   Estilização de Código
+================================ */
+
+code {
+  background-color: #00000000;
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-family: monospace;
+  color: #000000;
+  display: inline-block;
+}
+
+.code-block {
+  position: relative;
+}
+
+/* Botão de cópia para blocos de código */
+.copy-btn {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background-color: #00ff0894;
+  color: #000000;
+  border: none;
+  padding: 4px 8px;
+  font-size: 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.copy-btn:hover {
+  background-color: #00ff0d;
+}
+
+/* ================================
+   Imagens e Vídeos Responsivos
+================================ */
+
+.img-responsive {
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+  max-height: 400px;
+}
+
+.video-responsive {
+  width: 100%;
+  height: auto;
+  max-height: 400px;
+}
+
+/* ================================
+   Alertas
+================================ */
+
+.alert {
+  border-left: 5px solid;
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 5px;
+  font-weight: bold;
+}
+
+.alert-note {
+  border-left-color: #2196f3;
+  color: #0b5394;
+  padding: 8px 15px;
+  margin-bottom: 15px;
+  font-size: 16px;
+  background-color: transparent;
+}
+
+.alert-tip {
+  border-left-color: #4caf50;
+  color: #2e7d32;
+  padding: 8px 15px;
+  margin-bottom: 15px;
+  font-size: 16px;
+  background-color: transparent;
+}
+
+.alert-important {
+  border-left-color: #9c27b0;
+  color: #7b1fa2;
+  padding: 8px 15px;
+  margin-bottom: 15px;
+  font-size: 16px;
+  background-color: transparent;
+}
+
+.alert-warning {
+  border-left-color: #ff9800;
+  color: #ff5722;
+  padding: 8px 15px;
+  margin-bottom: 15px;
+  font-size: 16px;
+  background-color: transparent;
+}
+
+.alert-caution {
+  border-left-color: #f44336;
+  color: #b71c1c;
+  padding: 8px 15px;
+  margin-bottom: 15px;
+  font-size: 16px;
+  background-color: transparent;
+}
+
+/* ================================
+   Modal
+================================ */
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background-color: #fcfcfc;
+  padding: 20px;
+  width: 80%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: 8px;
+  position: relative;
+}
+
+/* Botão de fechamento do modal */
+.close-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: #ff00009d;
+  color: #000000;
+  border: none;
+  padding: 8px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.close-btn:hover {
+  background-color: #ff0000;
+}
+
+/* ================================
+   Componentes Específicos (App)
+================================ */
+
 .App {
   text-align: center;
 }
@@ -14,19 +349,23 @@
 }
 
 .App-header {
-  background-color: #282c34;
+  background-color: #28342a;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   font-size: calc(10px + 2vmin);
-  color: white;
+  color: #fff;
 }
 
 .App-link {
   color: #61dafb;
 }
+
+/* ================================
+   Animações
+================================ */
 
 @keyframes App-logo-spin {
   from {
@@ -37,56 +376,11 @@
   }
 }
 
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+/* ================================
+   Outros
+================================ */
 
-.modal {
-  background: white;
-  padding: 20px;
-  width: 80%;
-  max-width: 800px;
-  border-radius: 8px;
-  overflow-y: auto;
-  max-height: 80vh;
-}
-
-.close-btn {
-  background: red;
-  color: white;
-  border: none;
-  padding: 5px 10px;
-  font-size: 16px;
-  cursor: pointer;
-  position: absolute;
-  right: 20px;
-}
-
-.copy-btn {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: #007bff;
-  color: white;
-  border: none;
-  padding: 5px 10px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-h1, h2, h3, h4, h5, h6 {
-  position: relative;
-  padding-right: 20px;
-}
-
-h1:hover a, h2:hover a, h3:hover a, h4:hover a, h5:hover a, h6:hover a {
-  opacity: 1 !important;
+/* Container para diagramas Mermaid */
+.mermaid-container {
+  display: block;
 }
