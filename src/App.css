@@ -10,8 +10,8 @@
 }
 
 a {
-  color: #000000;
-  text-decoration: none;
+  color: #0000ee;
+  text-decoration: underline;
   transition: color 0.3s ease;
 }
 
@@ -214,16 +214,38 @@ code {
 ================================ */
 
 .img-responsive {
+  display: block;
   max-width: 100%;
   height: auto;
   object-fit: contain;
   max-height: 400px;
+  margin: 0 auto;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.img-responsive:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
 .video-responsive {
+  display: block;
   width: 100%;
   height: auto;
   max-height: 400px;
+  margin: 0 auto;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.video-responsive:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
 /* ================================
@@ -381,6 +403,124 @@ code {
 ================================ */
 
 /* Container para diagramas Mermaid */
+.mermaid-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  background: #fff;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+/* Container do diagrama */
 .mermaid-container {
-  display: block;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%; /* Garantir que ocupe toda a área disponível */
+  overflow: auto;
+  cursor: grab; /* Adiciona o cursor "mão" na área do container */
+}
+
+/* Quando o diagrama está sendo arrastado */
+.mermaid-container.dragging {
+  cursor: grabbing; /* Alterar o cursor quando estiver arrastando */
+}
+
+.mermaid-container svg {
+  width: 100%;
+  height: auto;
+}
+
+/* Barra de ferramentas (controle remoto) */
+.mermaid-toolbar {
+  position: absolute;
+  bottom: 20px;
+  right: 40px;  /* Distancia um pouco mais da borda direita */
+  display: flex;
+  gap: 5px; /* Reduzir o espaço entre os botões */
+  flex-direction: column; /* Ajuste para parecer um controle remoto */
+  z-index: 100;
+  pointer-events: auto; /* Garantir que os controles respondam ao clique */
+}
+
+.mermaid-toolbar button {
+  width: 50px;
+  height: 50px;
+  border: none;
+  cursor: pointer;
+  background: #007bff;
+  color: white;
+  border-radius: 8px; /* Tornar os botões quadrados com bordas arredondadas */
+  transition: background 0.3s, transform 0.2s ease-in-out;
+  font-size: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.mermaid-toolbar button:hover {
+  background: #0056b3;
+  transform: scale(1.2);
+}
+
+.mermaid-toolbar button:focus {
+  outline: none;
+}
+
+/* Estilo para fullscreen */
+.fullscreen {
+  position: fixed;
+  top: 50px; /* Ajuste para afastar do topo da tela */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80vw;
+  height: 80vh;
+  background: white;
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Tamanho do diagrama em fullscreen */
+.fullscreen .mermaid-container {
+  width: 100%;
+  height: 100%;
+}
+
+/* Ajuste do SVG no fullscreen */
+.fullscreen .mermaid-container svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Estilos adicionais para a barra de ferramentas no fullscreen */
+.fullscreen .mermaid-toolbar {
+  position: absolute;
+  top: 150px;
+  right: 50px;
+  background: rgba(0, 0, 0, 0.5); /* Fundo transparente */
+  padding: 10px;
+  border-radius: 8px;
+  display: flex;
+  gap: 10px; /* Reduzir o espaço entre os botões */
+}
+
+.fullscreen .mermaid-toolbar button {
+  background: #28a745; /* Cor verde para fullscreen */
+}
+
+.fullscreen .mermaid-toolbar button:hover {
+  background: #218838;
 }

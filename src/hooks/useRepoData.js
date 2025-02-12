@@ -1,6 +1,6 @@
 // src/hooks/useRepoData.js
 import { useState, useEffect } from "react";
-import { buildTreeGraph } from "../graphConfig";
+import { buildTreeGraph } from "../components/graphConfig";
 
 export default function useRepoData(repo, branch) {
   const [graphData, setGraphData] = useState({ nodes: [], links: [] });

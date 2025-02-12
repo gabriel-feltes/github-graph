@@ -4,7 +4,7 @@ import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { solarizedlight } from "react-syntax-highlighter/dist/esm/styles/prism";
-import * as Utils from "../functions";
+import * as Utils from "./functions";
 import { Heading } from "./heading";
 import { MermaidRenderer } from "./mermaid";
 import "../App.css";
@@ -16,7 +16,7 @@ const MarkdownModal = ({
   closeModal,
   modalContentRef,
   handleLinkClick,
-  handleCopyToClipboard
+  copyToClipboard
 }) => {
   // Componente para headings (h1-h6)
   const HeadingComponent = (props) => <Heading {...props} />;
@@ -64,21 +64,32 @@ const MarkdownModal = ({
               // Renderização de links, vídeos e embeds do YouTube
               a: ({ node, ...props }) => {
                 const { href, children } = props;
-
-                // Se for um link para um arquivo de vídeo
-                if (/\.(mp4|webm|ogg)$/i.test(href)) {
-                  const videoUrl = href.startsWith("http")
-                    ? href
-                    : `${rawBaseUrl}${currentPath}${encodeURIComponent(href)}`;
+              
+                // Tenta detectar se há uma imagem entre os filhos usando o "node" (a árvore de AST)
+                const nodeContainsImage =
+                  node &&
+                  Array.isArray(node.children) &&
+                  node.children.some(child => child && child.tagName === 'img');
+              
+                // Caso contrário, tenta detectar usando os elementos React já renderizados
+                const childrenContainImage = React.Children.toArray(children).some(
+                  (child) => child && (child.type === 'img' || child.props?.src)
+                );
+              
+                const containsImage = nodeContainsImage || childrenContainImage;
+              
+                // Se o link contém uma imagem, renderiza apenas o link com essa imagem
+                if (containsImage) {
                   return (
-                    <video src={videoUrl} controls className="video-responsive">
-                      Seu navegador não suporta vídeos.
-                    </video>
+                    <a href={href} onClick={(e) => handleLinkClick(href, e)}>
+                      {children}
+                    </a>
                   );
                 }
-
-                // Se for um link para um vídeo do YouTube
-                if (Utils.isYouTubeLink(href)) {
+              
+                // Se não há imagem, então verifica se o link é do YouTube
+                const isYouTubeLink = Utils.isYouTubeLink(href);
+                if (isYouTubeLink) {
                   let videoId = null;
                   if (href.includes("youtube.com")) {
                     videoId = new URL(href).searchParams.get("v");
@@ -86,6 +97,7 @@ const MarkdownModal = ({
                     const urlParts = href.split("/");
                     videoId = urlParts[urlParts.length - 1];
                   }
+              
                   if (videoId) {
                     return (
                       <div
@@ -114,20 +126,27 @@ const MarkdownModal = ({
                       </div>
                     );
                   }
+                }
+              
+                // Se o link é para um arquivo de vídeo (mp4, webm, ogg)
+                if (/\.(mp4|webm|ogg)(\?.*)?$/i.test(href)) {
+                  const videoUrl = href.startsWith("http")
+                    ? href
+                    : `${rawBaseUrl}${currentPath}${encodeURIComponent(href)}`;
                   return (
-                    <div>
-                      Link de vídeo do YouTube inválido ou não encontrado.
-                    </div>
+                    <video src={videoUrl} controls className="video-responsive">
+                      Seu navegador não suporta vídeos.
+                    </video>
                   );
                 }
-
-                // Caso seja um link padrão
+              
+                // Caso não seja nenhum dos casos anteriores, renderiza o link normalmente
                 return (
                   <a href={href} onClick={(e) => handleLinkClick(href, e)}>
                     {children}
                   </a>
                 );
-              },
+              },              
               video: ({ node, children, ...props }) => {
                 let src = props.src;
               
@@ -164,49 +183,96 @@ const MarkdownModal = ({
                   </video>
                 );
               },              
-              // Renderização de blocos de código e código inline
-              code: ({ inline, className, children, ...props }) => {
-                if (inline) {
-                  return <code {...props}>{children}</code>;
-                }
-
-                const codeContent = String(children).replace(/\n$/, "");
-                const match = /language-(\w+)/.exec(className || "");
-
-                // Renderiza o diagrama Mermaid se a linguagem for "mermaid"
-                if (match && match[1] === "mermaid") {
-                  return <MermaidRenderer code={codeContent} />;
-                }
-
-                // Renderização com syntax highlighter para linguagens reconhecidas
-                if (match) {
+              // Renderização de blocos de código
+              code: ({ className, children, ...props }) => {
+                // Verifica se "children" é uma string com quebras de linha (indicando bloco de código)
+                const isBlockCode = typeof children === "string" && children.includes("\n");
+              
+                if (isBlockCode) {
+                  // Tenta extrair o idioma do className (ex: "language-python")
+                  const match = className ? /language-(\w+)/.exec(className) : null;
+                  let language = match ? match[1] : null;
+              
+                  // Se for "mermaid", renderiza com o MermaidRenderer
+                  if (language === "mermaid") {
+                    return (
+                      <MermaidRenderer code={String(children).replace(/\n$/, "")} />
+                    );
+                  }
+              
+                  // Se não houver linguagem definida no bloco, default para "bash"
+                  if (!language) {
+                    language = "bash";
+                  }
+              
+                  // Renderiza o bloco de código com SyntaxHighlighter e botão de copiar
                   return (
-                    <div className="code-block">
+                    <div style={{ position: "relative" }}>
                       <button
-                        onClick={() => handleCopyToClipboard && handleCopyToClipboard(children)} // Usando o nome correto da função
-                        className="copy-btn"
+                        onClick={() => copyToClipboard(children)}
+                        style={{
+                          position: "absolute",
+                          top: "10px",
+                          right: "10px",
+                          backgroundColor: "#4CAF50",
+                          color: "white",
+                          padding: "5px 10px",
+                          border: "none",
+                          borderRadius: "5px",
+                          cursor: "pointer",
+                        }}
                       >
                         Copiar
                       </button>
-
                       <SyntaxHighlighter
-                        language={match[1]}
+                        language={language}
                         style={solarizedlight}
                         showLineNumbers
                       >
-                        {codeContent}
+                        {String(children).replace(/\n$/, "")}
                       </SyntaxHighlighter>
                     </div>
                   );
+                } else {
+                  // Caso contrário, trata-se de código inline – renderiza sem destaque especial nem botão
+                  return (
+                    <code
+                      {...props}
+                      style={{
+                        backgroundColor: "yellow",
+                        padding: "0",
+                        margin: "0",
+                        fontFamily: "monospace",
+                        color: "black",
+                      }}
+                    >
+                      {children}
+                    </code>
+                  );
                 }
-
-                // Fallback para blocos de código sem linguagem especificada
-                return (
-                  <pre>
-                    <code {...props}>{children}</code>
-                  </pre>
-                );
               },
+              // Renderização personalizada para tabelas
+              table: ({ children }) => (
+                <table style={{ width: '100%', borderCollapse: 'collapse', margin: '20px 0' }}>
+                  {children}
+                </table>
+              ),
+              th: ({ children }) => (
+                <th style={{ border: '1px solid #ddd', padding: '8px', backgroundColor: '#f2f2f2', textAlign: 'left' }}>
+                  {children}
+                </th>
+              ),
+              td: ({ children }) => (
+                <td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>
+                  {children}
+                </td>
+              ),
+              // Renderização personalizada para sub
+              sub: ({ children }) => (
+                <sub style={{ display: 'block', textAlign: 'center' }}>
+                  {children}
+                </sub>
+              ),
             }}
           />
         </div>

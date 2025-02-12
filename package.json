@@ -17,6 +17,7 @@
     "rehype-raw": "^7.0.0",
     "remark-gfm": "^4.0.0",
     "remark-slug": "^7.0.1",
+    "svg-pan-zoom": "^3.6.2",
     "web-vitals": "^4.2.4"
   },
   "scripts": {

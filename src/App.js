@@ -2,7 +2,7 @@ import React, { useState, useRef } from "react";
 import GraphViewer from "./components/graphViewer";
 import MarkdownModal from "./components/MarkdownModal";
 import useRepoData from "./hooks/useRepoData";
-import * as Utils from "./functions";
+import * as Utils from "./components/functions";
 import processAlerts from "./components/processAlerts";
 import "./App.css";
 
@@ -54,8 +54,15 @@ function App() {
     const fixedHref = decodeURIComponent(
       href.startsWith("/") ? href.slice(1) : href
     );
+  
+    // Novo código para lidar com links externos
+    if (fixedHref.startsWith('http://') || fixedHref.startsWith('https://')) {
+      window.open(fixedHref, '_blank');  // Abre em nova aba
+      return;
+    }
+  
     const targetNode = graphData.nodes.find((n) => n.id === fixedHref);
-
+  
     if (targetNode) {
       handleNodeClick(targetNode);
     } else {
@@ -104,7 +111,7 @@ function App() {
           closeModal={closeModal}
           modalContentRef={modalContentRef}
           handleLinkClick={handleLinkClick}
-          handleCopyToClipboard={copyToClipboard}
+          copyToClipboard={copyToClipboard}
         />
       )}
     </div>
